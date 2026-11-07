@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COS212 App — Binary Search Tree Tutor</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#fff; --ink:#1d2433; --muted:#5b6475; --line:#dde2ea;
+    --accent:#2457c5; --accent-ink:#fff; --ok:#1e8e5a; --warn:#c7791a; --bad:#c43d3d;
+    --hl:#ffd166; --path:#9ecbff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--card);border-bottom:1px solid var(--line);padding:.6rem 1rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+  header h1{font-size:1.05rem;margin:0 1rem 0 0}
+  nav{display:flex;gap:.25rem;flex-wrap:wrap}
+  nav button{background:none;border:1px solid transparent;border-radius:8px;padding:.35rem .7rem;cursor:pointer;color:var(--muted);font:inherit}
+  nav button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+  nav button:disabled{opacity:.4;cursor:not-allowed}
+  nav button .lock{font-size:.8em}
+  main{max-width:960px;margin:0 auto;padding:1rem}
+  section.view{display:none}
+  section.view.active{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem}
+  h2{margin:.2rem 0 .6rem;font-size:1.35rem}
+  h3{margin:.8rem 0 .3rem;font-size:1.05rem}
+  p{margin:.4rem 0}
+  .muted{color:var(--muted)}
+  .btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:.5rem .9rem;font:inherit;cursor:pointer}
+  .btn.secondary{background:#e9eef8;color:var(--accent)}
+  .btn.ok{background:var(--ok)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.5rem 0}
+  input[type=number]{font:inherit;padding:.45rem .6rem;border:1px solid var(--line);border-radius:8px;width:7rem}
+  input[type=range]{width:9rem}
+  svg.tree{width:100%;height:auto;background:#fbfcff;border:1px solid var(--line);border-radius:12px}
+  .node circle{fill:#fff;stroke:var(--ink);stroke-width:2;transition:fill .25s,stroke .25s}
+  .node text{font-size:16px;font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+  .node.hl circle{fill:var(--hl);stroke:var(--warn);stroke-width:3}
+  .node.path circle{fill:var(--path)}
+  .node.new circle{fill:#c8f3dc;stroke:var(--ok);stroke-width:3}
+  .node.found circle{fill:#c8f3dc;stroke:var(--ok);stroke-width:3}
+  .edge{stroke:#8a94a6;stroke-width:2}
+  .ghost circle{fill:none;stroke:var(--bad);stroke-dasharray:4 3}
+  .ghost text{fill:var(--bad);font-size:13px}
+  .narr{min-height:3.2em;padding:.6rem .8rem;border-left:4px solid var(--accent);background:#eef3fd;border-radius:0 8px 8px 0;margin:.6rem 0}
+  .narr.good{border-color:var(--ok);background:#e8f7ef}
+  .narr.bad{border-color:var(--bad);background:#fdecec}
+  .choice{display:flex;gap:.5rem;flex-wrap:wrap}
+  .opt{display:block;width:100%;text-align:left;background:#f3f5f9;border:1px solid var(--line);border-radius:8px;padding:.55rem .8rem;margin:.3rem 0;font:inherit;cursor:pointer}
+  .opt:hover{border-color:var(--accent)}
+  .opt.right{background:#e8f7ef;border-color:var(--ok)}
+  .opt.wrong{background:#fdecec;border-color:var(--bad)}
+  .opt:disabled{cursor:default}
+  .pill{display:inline-block;padding:.1rem .55rem;border-radius:999px;font-size:.8rem;border:1px solid var(--line);background:#f3f5f9;margin-left:.3rem}
+  .pill.ok{background:#e8f7ef;border-color:var(--ok);color:var(--ok)}
+  .pill.lock{color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+  .bar{height:10px;background:#e9edf3;border-radius:999px;overflow:hidden}
+  .bar>div{height:100%;background:var(--ok);width:0;transition:width .3s}
+  .objective{display:flex;gap:.6rem;align-items:flex-start;margin:.3rem 0}
+  .objective .lvl{font-size:.75rem;color:var(--muted);min-width:5.5rem;padding-top:.2rem}
+  .small{font-size:.85rem}
+  .badge{font-size:1.1rem;padding:.6rem 1rem;border-radius:12px;background:#e8f7ef;border:1px solid var(--ok);display:inline-block}
+  kbd{background:#eef;border:1px solid #ccd;border-radius:4px;padding:0 .3em;font-size:.85em}
+  .mini svg{width:100%;max-width:260px}
+  .sr-only{position:absolute;left:-9999px}
+  footer{text-align:center;color:var(--muted);font-size:.8rem;padding:1rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌳 COS212 App · Binary Search Trees</h1>
+  <nav id="nav" aria-label="Lesson steps"></nav>
+</header>
+
+<main>
+
+<!-- ───────────── 0. WELCOME ───────────── -->
+<section class="view" id="v-welcome">
+  <div class="card">
+    <h2>Find one name in 1 000 pages — in about 10 page-turns?</h2>
+    <p>A phone book is sorted, so you never read it from the front. You open the middle, decide <em>left or right</em>, and throw away half the book each time. A <strong>Binary Search Tree</strong> is a data structure that does exactly this — and today you'll build one yourself, before the lecture even starts.</p>
+    <div class="mini" id="welcome-anim"></div>
+    <h3>In about 20 minutes you will be able to…</h3>
+    <div class="objective"><span class="lvl">Remember</span><span><strong>O1</strong> State the BST ordering rule and name the parts of a tree.</span></div>
+    <div class="objective"><span class="lvl">Understand</span><span><strong>O2</strong> Tell a valid BST from an invalid one, and say which rule is broken.</span></div>
+    <div class="objective"><span class="lvl">Apply</span><span><strong>O3</strong> Trace how a value is inserted into (or searched for in) a tree, step by step.</span></div>
+    <div class="objective"><span class="lvl">Apply</span><span><strong>O4</strong> Build the tree that results from inserting a list of values.</span></div>
+    <div class="objective"><span class="lvl">Analyse</span><span><strong>O5</strong> Explain why the <em>order</em> you insert values in changes the tree's shape and speed.</span></div>
+    <h3>Things you already know (quick recap)</h3>
+    <p class="small">• Comparing two numbers: <code>a &lt; b</code>, <code>a &gt; b</code>. • A <em>node</em> is an object holding a value plus references to other nodes — you met this with linked lists. • A reference can be <code>null</code> (empty).</p>
+    <div class="row"><button class="btn" onclick="go('learn1')">Start → What is a BST?</button></div>
+  </div>
+</section>
+
+<!-- ───────────── 1. LEARN 1 ───────────── -->
+<section class="view" id="v-learn1">
+  <div class="card">
+    <h2>1 · What does a tree look like?</h2>
+    <div class="grid2">
+      <div>
+        <p>A <strong>binary tree</strong> is made of <strong>nodes</strong>. Each node holds one value and has up to <strong>two children</strong>: a <em>left</em> child and a <em>right</em> child.</p>
+        <p>Three words you need:</p>
+        <ul>
+          <li><strong>Root</strong> — the single node at the top; the entry point.</li>
+          <li><strong>Leaf</strong> — a node with no children.</li>
+          <li><strong>Subtree</strong> — a node together with everything below it. The left child of the root, plus all of its descendants, is the root's <em>left subtree</em>.</li>
+        </ul>
+        <p class="muted small">That's it: a linked list where each node can point to two next nodes instead of one.</p>
+      </div>
+      <div class="mini" id="learn1-tree"></div>
+    </div>
+    <div class="row"><button class="btn secondary" onclick="go('welcome')">← Back</button><button class="btn" onclick="go('learn2')">Next → The ordering rule</button></div>
+  </div>
+</section>
+
+<!-- ───────────── 2. LEARN 2 ───────────── -->
+<section class="view" id="v-learn2">
+  <div class="card">
+    <h2>2 · The one rule that makes it a <em>search</em> tree</h2>
+    <p style="font-size:1.1rem;padding:.6rem .9rem;background:#eef3fd;border-radius:8px"><strong>Everything in a node's LEFT subtree is smaller than the node. Everything in its RIGHT subtree is larger.</strong> This holds for <em>every</em> node, not just the root.</p>
+    <p>So if you're looking for 20 and you're standing at 50, you only ever need to look left. The entire right half of the tree is ignored — that's the phone-book trick.</p>
+    <div class="grid2">
+      <div class="mini"><h3>✅ Valid BST</h3><div id="learn2-valid"></div><p class="small muted">Check 30's right child: 40 &gt; 30 ✓ and 40 &lt; 50 ✓ (it's in 50's left subtree).</p></div>
+      <div class="mini"><h3>❌ Not a BST</h3><div id="learn2-invalid"></div><p class="small muted">60 is in 50's <em>left</em> subtree but 60 &gt; 50. The rule is broken even though 60 &gt; 30 looks fine locally.</p></div>
+    </div>
+    <p class="muted small">Duplicates? In this app we don't allow them — inserting a value that's already there does nothing. (Your lecturer may choose a different convention.)</p>
+    <div class="row"><button class="btn secondary" onclick="go('learn1')">← Back</button><button class="btn" onclick="go('watch')">Next → Watch an insertion</button></div>
+  </div>
+</section>
+
+<!-- ───────────── 3. WATCH ───────────── -->
+<section class="view" id="v-watch">
+  <div class="card">
+    <h2>3 · Watch: inserting a value</h2>
+    <p>The algorithm is three lines long. Start at the root; compare; go left if smaller, right if larger; when you reach an empty spot, put the new node there.</p>
+    <div class="row">
+      <label>Value <input type="number" id="watch-val" value="40" min="0" max="99" aria-label="Value to insert"></label>
+      <button class="btn" id="watch-insert">Insert</button>
+      <button class="btn secondary" id="watch-search">Search</button>
+      <button class="btn secondary" id="watch-step" disabled>Step ▶|</button>
+      <button class="btn secondary" id="watch-play" disabled>Play ▶</button>
+      <label class="small">Speed <input type="range" id="watch-speed" min="300" max="2000" step="100" value="900" aria-label="Animation speed"></label>
+      <button class="btn secondary" id="watch-example">Load example</button>
+      <button class="btn secondary" id="watch-clear">Clear tree</button>
+    </div>
+    <div class="narr" id="watch-narr" aria-live="polite">Load the example tree, then insert a value and watch each comparison.</div>
+    <div id="watch-svg"></div>
+    <p class="small muted">Tip: use <kbd>Step</kbd> to go one comparison at a time. Try inserting a value that is already in the tree.</p>
+    <div class="row"><button class="btn secondary" onclick="go('learn2')">← Back</button><button class="btn" onclick="go('try')">Next → Your turn to predict</button></div>
+  </div>
+</section>
+
+<!-- ───────────── 4. TRY ───────────── -->
+<section class="view" id="v-try">
+  <div class="card">
+    <h2>4 · Try: predict the path</h2>
+    <p>Now <em>you</em> are the algorithm. Before each step, choose where the value goes. The tutor confirms or corrects you.</p>
+    <div class="row">
+      <button class="btn" id="try-new">New challenge</button>
+      <label class="small"><input type="checkbox" id="try-hints" checked> Show hints</label>
+      <span class="pill" id="try-score">0 / 0 correct</span>
+    </div>
+    <div class="narr" id="try-narr" aria-live="polite">Press <strong>New challenge</strong>.</div>
+    <div class="choice" id="try-choice">
+      <button class="btn" id="try-left" disabled>◀ Go left</button>
+      <button class="btn" id="try-right" disabled>Go right ▶</button>
+      <button class="btn ok" id="try-place" disabled>Place it here</button>
+    </div>
+    <div id="try-svg"></div>
+    <div class="row"><button class="btn secondary" onclick="go('watch')">← Back</button><button class="btn" onclick="go('quiz')">Next → Check yourself</button></div>
+  </div>
+</section>
+
+<!-- ───────────── 5. QUIZ ───────────── -->
+<section class="view" id="v-quiz">
+  <div class="card">
+    <h2>5 · Check yourself</h2>
+    <p class="muted small">Three tiers. Score 4/5 or better to unlock the next. If you don't, that's fine — the app re-teaches the bit you missed and lets you try again with new questions.</p>
+    <div class="row" id="tier-buttons"></div>
+    <div id="quiz-area"></div>
+  </div>
+</section>
+
+<!-- ───────────── 6. WHY ORDER MATTERS ───────────── -->
+<section class="view" id="v-why">
+  <div class="card">
+    <h2>6 · Why does insertion order matter?</h2>
+    <p>Insert the <em>same</em> seven numbers in two different orders and compare the trees.</p>
+    <div class="grid2">
+      <div><h3>Order: 4, 2, 6, 1, 3, 5, 7</h3><div id="why-good"></div><p class="small">Height 3. Finding any value takes at most <strong>3</strong> comparisons.</p></div>
+      <div><h3>Order: 1, 2, 3, 4, 5, 6, 7</h3><div id="why-bad"></div><p class="small">Height 7 — it's just a linked list in disguise. Finding 7 takes <strong>7</strong> comparisons. The phone-book trick is gone.</p></div>
+    </div>
+    <p>A tree whose height stays small is called <strong>balanced</strong>. Your lecture will show how trees like AVL and Red-Black trees keep themselves balanced no matter what order the values arrive in — and how to <em>delete</em> values, which this app skipped.</p>
+    <div class="row"><button class="btn secondary" onclick="go('quiz')">← Back to quiz</button><button class="btn" onclick="go('progress')">My progress →</button></div>
+  </div>
+</section>
+
+<!-- ───────────── 7. PROGRESS ───────────── -->
+<section class="view" id="v-progress">
+  <div class="card">
+    <h2>My progress</h2>
+    <div id="progress-area"></div>
+    <div class="row"><button class="btn secondary" onclick="resetProgress()">Reset my progress</button></div>
+  </div>
+</section>
+
+</main>
+<footer>COS212 App prototype · COS750 2026 · runs entirely in your browser; nothing is sent anywhere.</footer>
+
+<script>
+/* =====================================================================
+   MODEL — BST with trace-producing operations
+   ===================================================================== */
+let _nid = 1;
+class Node { constructor(v){ this.v=v; this.l=null; this.r=null; this.id=_nid++; } }
+
+class BST {
+  constructor(){ this.root=null; }
+  static from(vals){ const t=new BST(); vals.forEach(v=>t.insert(v)); return t; }
+  values(){ const out=[]; (function w(n){ if(!n)return; w(n.l); out.push(n.v); w(n.r);} )(this.root); return out; }
+  size(){ return this.values().length; }
+  height(){ return (function h(n){ return n? 1+Math.max(h(n.l),h(n.r)) : 0; })(this.root); }
+  /** Insert v, returning a trace of steps. Mutates the tree. */
+  insert(v){
+    const trace=[];
+    if(!this.root){ this.root=new Node(v); trace.push({kind:'place',parent:null,side:null,node:this.root}); return trace; }
+    let n=this.root;
+    for(;;){
+      if(v===n.v){ trace.push({kind:'dup',node:n,value:v}); return trace; }
+      const side = v<n.v ? 'L' : 'R';
+      trace.push({kind:'compare',node:n,value:v,side});
+      const child = side==='L'? n.l : n.r;
+      if(!child){ const nn=new Node(v); if(side==='L') n.l=nn; else n.r=nn; trace.push({kind:'place',parent:n,side,node:nn}); return trace; }
+      n=child;
+    }
+  }
+  /** Search for v, returning a trace. Does not mutate. */
+  search(v){
+    const trace=[]; let n=this.root;
+    while(n){
+      if(v===n.v){ trace.push({kind:'found',node:n,value:v}); return trace; }
+      const side = v<n.v?'L':'R';
+      trace.push({kind:'compare',node:n,value:v,side});
+      n = side==='L'? n.l : n.r;
+    }
+    trace.push({kind:'notfound',value:v}); return trace;
+  }
+  /** Layout: x by in-order index, y by depth. */
+  layout(){
+    const pos=[]; let i=0;
+    (function w(n,d){ if(!n)return; w(n.l,d+1); pos.push({node:n,ix:i++,depth:d}); w(n.r,d+1); })(this.root,0);
+    return pos;
+  }
+}
+
+/* =====================================================================
+   VIEW — SVG renderer
+   ===================================================================== */
+function renderTree(container, tree, opts={}){
+  const pos=tree.layout(); const n=pos.length;
+  const W=Math.max(320, n*56+40), levelH=70, H=Math.max(140,(tree.height()+(opts.ghost?1:0))*levelH+40);
+  const byId={}; pos.forEach(p=>{ p.x=20+(p.ix+.5)*((W-40)/Math.max(n,1)); p.y=40+p.depth*levelH; byId[p.node.id]=p; });
+  let s=`<svg class="tree" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label||'Binary search tree with '+n+' nodes'}">`;
+  pos.forEach(p=>{ ['l','r'].forEach(c=>{ const ch=p.node[c]; if(ch){ const q=byId[ch.id]; s+=`<line class="edge" x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}"/>`; } }); });
+  if(opts.ghost && opts.ghost.parent){ const p=byId[opts.ghost.parent.id]; const gx=p.x+(opts.ghost.side==='L'?-40:40), gy=p.y+levelH; s+=`<line class="edge" stroke-dasharray="4 3" x1="${p.x}" y1="${p.y}" x2="${gx}" y2="${gy}"/><g class="ghost"><circle cx="${gx}" cy="${gy}" r="18"/><text x="${gx}" y="${gy}">${opts.ghost.value}</text></g>`; }
+  pos.forEach(p=>{ const cls=(opts.classes&&opts.classes[p.node.id])||''; s+=`<g class="node ${cls}" data-id="${p.node.id}"><circle cx="${p.x}" cy="${p.y}" r="20"/><text x="${p.x}" y="${p.y}">${p.node.v}</text></g>`; });
+  if(n===0) s+=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#888">empty tree — insert a value</text>`;
+  s+='</svg>'; container.innerHTML=s;
+}
+
+/* =====================================================================
+   CONTROLLER — animation of a trace
+   ===================================================================== */
+class Animator {
+  constructor(svgEl, narrEl, tree){ this.svgEl=svgEl; this.narrEl=narrEl; this.tree=tree; this.trace=[]; this.i=0; this.timer=null; this.classes={}; this.onDone=null; }
+  load(trace, op){ this.stop(); this.trace=trace; this.i=0; this.op=op; this.classes={}; this.render(); }
+  render(ghost){ renderTree(this.svgEl, this.tree, {classes:this.classes, ghost}); }
+  narrate(t, mood){ this.narrEl.textContent=t; this.narrEl.className='narr'+(mood?' '+mood:''); }
+  stepText(st){
+    const v=st.value;
+    switch(st.kind){
+      case 'compare': return `Compare ${v} with ${st.node.v}: ${v} ${st.side==='L'?'<':'>'} ${st.node.v}, so go ${st.side==='L'?'LEFT':'RIGHT'}.`;
+      case 'place':   return st.parent? `The ${st.side==='L'?'left':'right'} child of ${st.parent.v} is empty — place ${st.node.v} there. Done.` : `The tree was empty, so ${st.node.v} becomes the root.`;
+      case 'dup':     return `${v} is already in the tree. Nothing is inserted (no duplicates).`;
+      case 'found':   return `${v} equals ${st.node.v} — FOUND after ${this.i} comparison${this.i===1?'':'s'}.`;
+      case 'notfound':return `Reached an empty spot — ${v} is NOT in the tree.`;
+    }
+  }
+  step(){
+    if(this.i>=this.trace.length){ this.stop(); return false; }
+    const st=this.trace[this.i];
+    Object.keys(this.classes).forEach(k=>{ if(this.classes[k]==='hl') this.classes[k]='path'; });
+    let ghost=null;
+    if(st.kind==='compare'){ this.classes[st.node.id]='hl'; }
+    else if(st.kind==='place'){ this.classes[st.node.id]='new'; }
+    else if(st.kind==='dup'||st.kind==='found'){ this.classes[st.node.id]='found'; }
+    this.render(ghost);
+    this.narrate(this.stepText(st), (st.kind==='place'||st.kind==='found')?'good':(st.kind==='notfound'||st.kind==='dup')?'bad':'');
+    this.i++;
+    if(this.i>=this.trace.length){ this.stop(); if(this.onDone) this.onDone(); return false; }
+    return true;
+  }
+  play(speed){ this.stop(); this.timer=setInterval(()=>{ if(!this.step()) this.stop(); }, speed); }
+  stop(){ if(this.timer){ clearInterval(this.timer); this.timer=null; } }
+}
+
+/* =====================================================================
+   PROGRESS STORE (localStorage)
+   ===================================================================== */
+const KEY='cos212bst';
+const Progress={
+  data:{version:1, unlocked:[1], best:{}, attempts:{}, tryCorrect:0, tryTotal:0, visited:[]},
+  load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.version===1) this.data=Object.assign(this.data,d);}catch(e){} },
+  save(){ try{ localStorage.setItem(KEY, JSON.stringify(this.data)); }catch(e){} },
+  passed(t){ return (this.data.best[t]||0) >= THRESHOLD; },
+  ready(){ return [1,2,3].every(t=>this.passed(t)); }
+};
+function resetProgress(){ if(confirm('Clear your saved progress?')){ try{localStorage.removeItem(KEY);}catch(e){} location.reload(); } }
+
+/* =====================================================================
+   ITEM BANK — tiers, items, remedial activities
+   (content developer: extend each bank to ≥ 10 items)
+   ===================================================================== */
+const THRESHOLD=0.8, QUIZ_LEN=5;
+const TIERS=[
+ { id:1, name:'Tier 1 · Remember & understand', bloom:'Remember / Understand', objectives:'O1, O2',
+   remedialView:'learn2', remedialText:'Re-read the ordering rule and the valid/invalid examples, then come back and try new questions.',
+   items:[
+    {stem:'In a BST, every value in the LEFT subtree of a node is…', options:['greater than the node','smaller than the node','equal to the node','in no particular order'], answer:1, why:'The BST rule: left subtree < node < right subtree.'},
+    {stem:'The node at the top of a tree, where every search starts, is called the…', options:['leaf','branch','root','parent'], answer:2, why:'The root is the single entry point; leaves are the nodes with no children.'},
+    {stem:'A node with no children is called a…', options:['root','leaf','subtree','null'], answer:1, why:'Leaf = no children. Null is an empty reference, not a node.'},
+    {stem:'How many children can a node in a BINARY tree have at most?', options:['1','2','3','any number'], answer:1, why:'"Binary" means at most two: a left child and a right child.'},
+    {stem:'Root 50 has left child 30. 30 has right child 60. Is this a valid BST?', options:['Yes — 60 > 30 so it is fine','No — 60 is in 50\'s left subtree but 60 > 50','Yes — only the root\'s direct children matter','No — a left child cannot have a right child'], answer:1, why:'The rule applies to whole subtrees, not just direct children. Everything under 50\'s left child must be < 50.'},
+    {stem:'Which statement about a BST is TRUE?', options:['Values must be inserted in sorted order','The left child is always a leaf','The rule (left < node < right) must hold at every node','The root is always the smallest value'], answer:2, why:'The ordering rule holds for every node. Nothing requires sorted input or any particular root value.'},
+    {stem:'Searching for 20 starting at root 50, which part of the tree can you ignore completely?', options:['The left subtree','The right subtree','The root','Nothing — you must check all nodes'], answer:1, why:'20 < 50, so 20 can only be in the left subtree. The whole right subtree is skipped.'},
+    {stem:'A "subtree" is…', options:['any single node','a node together with all its descendants','only the leaves of a tree','the path from root to a leaf'], answer:1, why:'A subtree is a node plus everything below it — it is itself a tree.'},
+    {stem:'Root 40, right child 60, 60\'s left child 50. Valid BST?', options:['Yes','No — 50 < 60 but 50 should be on the right','No — 50 < 40','Only if 50 is a leaf'], answer:0, why:'50 > 40 (right subtree ✓) and 50 < 60 (left of 60 ✓). Valid.'},
+    {stem:'Why is it called a binary SEARCH tree rather than just a binary tree?', options:['It can only store numbers','Its nodes are arranged by the ordering rule, which makes searching fast','It always has an even number of nodes','It is searched with a loop'], answer:1, why:'The ordering rule is what lets a search discard half the remaining tree at each step.'},
+   ]},
+ { id:2, name:'Tier 2 · Apply', bloom:'Apply', objectives:'O3, O4',
+   remedialView:'try', remedialText:'Do a few guided "predict the path" challenges with hints ON, then come back for new questions.',
+   items:[
+    {stem:'Tree: 50 (left 30, right 70); 30 has left 20 and right 40. Insert 45. Which node becomes its parent?', options:['50','30','40','70'], answer:2, why:'45 < 50 → left to 30; 45 > 30 → right to 40; 45 > 40 → 40\'s right is empty → place there. Parent = 40.'},
+    {stem:'Same tree (50; 30, 70; 20, 40). Insert 65. Where does it go?', options:['Left child of 70','Right child of 70','Right child of 50','Left child of 50'], answer:0, why:'65 > 50 → right to 70; 65 < 70 → 70\'s left is empty → place there.'},
+    {stem:'Insert 50, 30, 70, 20 (in that order) into an empty tree. What is 20\'s parent?', options:['50','30','70','20 becomes the root'], answer:1, why:'50 is root; 30 goes left of 50; 70 right of 50; 20 < 50 → left to 30; 20 < 30 → left of 30.'},
+    {stem:'Insert 10, 20, 30 (in that order) into an empty tree. What is the shape?', options:['10 at root with 20 and 30 as its two children','A straight line going right: 10 → 20 → 30','30 at root with 10 and 20 below','A straight line going left'], answer:1, why:'Each value is larger than everything before it, so each goes right of the previous one.'},
+    {stem:'Tree: 50 (left 30, right 70). Search for 60. How many comparisons before you know it is NOT there?', options:['1','2','3','You must check every node'], answer:1, why:'60 vs 50 → right; 60 vs 70 → left; 70\'s left is empty → not found. Two comparisons.'},
+    {stem:'Tree: 50 (left 30, right 70). Insert 50 again. What happens?', options:['A second 50 is placed to the left','A second 50 is placed to the right','Nothing — duplicates are not inserted (our convention)','The tree is rebuilt'], answer:2, why:'In this app duplicates are rejected: the comparison finds an equal value and stops.'},
+    {stem:'Insert 40, 20, 60, 10, 30, 50, 70 in that order. What is the height (number of levels)?', options:['2','3','4','7'], answer:1, why:'40 root; 20 and 60 on level 2; 10, 30, 50, 70 on level 3. A perfectly balanced tree of 7 nodes.'},
+    {stem:'Tree: 50 (left 30, right 70); 70 has right child 90. Insert 80. Which comparisons are made, in order?', options:['50, 70, 90','50, 30','50, 70','50, 90'], answer:0, why:'80 > 50 → right; 80 > 70 → right; 80 < 90 → left; 90\'s left is empty → place.'},
+    {stem:'Insert 8, 3, 10, 1, 6 into an empty tree. Which values are leaves?', options:['8 and 10','1, 6 and 10','3 and 10','1 and 6'], answer:1, why:'8 root; 3 left, 10 right; 1 left of 3; 6 right of 3. Nodes without children: 1, 6, 10.'},
+    {stem:'Starting at root 50, you are searching for 35 and reach node 30. What do you do next?', options:['Go left of 30','Go right of 30','Stop — 35 is not there','Go back to 50'], answer:1, why:'35 > 30, so go right. Only an EMPTY reference ends an unsuccessful search.'},
+   ]},
+ { id:3, name:'Tier 3 · Analyse', bloom:'Analyse', objectives:'O5',
+   remedialView:'why', remedialText:'Look at the two trees built from the same values in different orders, then come back for new questions.',
+   items:[
+    {stem:'Which insertion order of the values 1–7 produces the TALLEST tree?', options:['4, 2, 6, 1, 3, 5, 7','1, 2, 3, 4, 5, 6, 7','4, 1, 7, 2, 6, 3, 5','7, 4, 1, 6, 2, 5, 3'], answer:1, why:'Sorted input makes every value go right of the previous one: a chain of height 7.'},
+    {stem:'Why is a tall, chain-like BST slow to search?', options:['Because it uses more memory','Because each comparison only removes one node instead of about half the tree','Because the root is wrong','Because leaves are far apart'], answer:1, why:'The speed of BST search comes from discarding a subtree at each step. In a chain, each step discards just one node — like a linked list.'},
+    {stem:'A BST of 1 000 values is perfectly balanced. Roughly how many comparisons does a search need at most?', options:['About 10','About 100','About 500','About 1 000'], answer:0, why:'Halving 1 000 repeatedly: 1000 → 500 → 250 → … → 1 takes about 10 steps (2¹⁰ = 1024).'},
+    {stem:'Which value would make the BEST root for a tree that will hold the values 10, 20, 30, 40, 50?', options:['10','30','50','It makes no difference'], answer:1, why:'The middle value splits the rest evenly: two go left, two go right, giving the smallest height.'},
+    {stem:'Two BSTs hold exactly the same values. Which of these MUST be the same for both?', options:['Their shape','Their height','Their root','The sorted sequence you get reading left-to-right (in-order)'], answer:3, why:'Shape depends on insertion order, but the in-order reading of any BST is always the sorted values.'},
+    {stem:'You insert values in RANDOM order into a BST. What shape do you most likely get?', options:['A perfect chain','A reasonably balanced tree','A tree with only left children','A tree with the smallest value at the root'], answer:1, why:'Random order tends to put a "middling" value near the top, so subtrees stay fairly even.'},
+    {stem:'What does a lecture on AVL or Red-Black trees mainly fix?', options:['Duplicates','The tree becoming unbalanced (tall) after insertions','Searching for values that are not there','The need for a root'], answer:1, why:'Self-balancing trees re-arrange nodes after insertion so the height stays small regardless of input order.'},
+    {stem:'Searching for 5 in the chain 1 → 2 → 3 → 4 → 5 (each the right child of the previous) takes how many comparisons?', options:['1','3','5','It cannot be found'], answer:2, why:'You visit every node: 1, 2, 3, 4, 5. Five comparisons — no better than a list.'},
+    {stem:'Which best describes why insertion order matters?', options:['Insertion order changes which values are stored','Insertion order determines the shape, and shape determines search cost','Insertion order affects the ordering rule','It does not matter'], answer:1, why:'Same values, different order → different shape → different height → different number of comparisons.'},
+    {stem:'A BST has height 4. What is the MAXIMUM number of comparisons a successful search can need?', options:['2','4','8','16'], answer:1, why:'A search walks one path from the root downward; the longest such path has as many nodes as the height.'},
+   ]},
+];
+
+/* =====================================================================
+   QUIZ CONTROLLER + SCAFFOLDING POLICY
+   ===================================================================== */
+let quiz=null;
+function pick(items, k, seen){ const pool=items.filter(it=>!seen.includes(it.stem)); const src=pool.length>=k?pool:items; return src.slice().sort(()=>Math.random()-.5).slice(0,k); }
+function startTier(tid){
+  const tier=TIERS.find(t=>t.id===tid);
+  const seen=(Progress.data.attempts[tid]||[]);
+  quiz={tier, items:pick(tier.items, QUIZ_LEN, seen), i:0, correct:0, missed:[]};
+  renderTierButtons(); renderQuestion();
+}
+function renderTierButtons(){
+  const el=document.getElementById('tier-buttons'); el.innerHTML='';
+  TIERS.forEach(t=>{
+    const unlocked=Progress.data.unlocked.includes(t.id); const best=Progress.data.best[t.id];
+    const b=document.createElement('button'); b.className='btn'+(quiz&&quiz.tier.id===t.id?'':' secondary'); b.disabled=!unlocked;
+    b.innerHTML=`${t.name} ${best!==undefined?`<span class="pill ${best>=THRESHOLD?'ok':''}">${Math.round(best*QUIZ_LEN)}/${QUIZ_LEN}</span>`:''}${unlocked?'':' <span class="pill lock">🔒</span>'}`;
+    b.onclick=()=>startTier(t.id); el.appendChild(b);
+  });
+}
+function renderQuestion(){
+  const area=document.getElementById('quiz-area'); const q=quiz.items[quiz.i];
+  area.innerHTML=`<p class="muted small">${quiz.tier.name} · question ${quiz.i+1} of ${quiz.items.length} · level: ${quiz.tier.bloom}</p>
+    <div class="bar"><div style="width:${(quiz.i/quiz.items.length)*100}%"></div></div>
+    <h3 id="q-stem">${q.stem}</h3><div id="q-opts" role="group" aria-labelledby="q-stem"></div><div id="q-fb"></div>`;
+  const opts=document.getElementById('q-opts');
+  q.options.forEach((o,idx)=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o; b.onclick=()=>answer(idx); opts.appendChild(b); });
+}
+function answer(idx){
+  const q=quiz.items[quiz.i]; const btns=[...document.querySelectorAll('#q-opts .opt')];
+  btns.forEach((b,i)=>{ b.disabled=true; if(i===q.answer) b.classList.add('right'); else if(i===idx) b.classList.add('wrong'); });
+  const ok=idx===q.answer; if(ok) quiz.correct++; else quiz.missed.push(q);
+  const fb=document.getElementById('q-fb');
+  fb.innerHTML=`<div class="narr ${ok?'good':'bad'}">${ok?'✅ Correct. ':'❌ Not quite. '}${q.why}</div><div class="row"><button class="btn" id="q-next">${quiz.i+1<quiz.items.length?'Next question →':'See result'}</button></div>`;
+  document.getElementById('q-next').onclick=()=>{ quiz.i++; if(quiz.i<quiz.items.length) renderQuestion(); else finishTier(); };
+}
+/** ScaffoldingPolicy: advance or remediate. */
+function finishTier(){
+  const t=quiz.tier; const score=quiz.correct/quiz.items.length;
+  Progress.data.attempts[t.id]=(Progress.data.attempts[t.id]||[]).concat(quiz.items.map(i=>i.stem)).slice(-QUIZ_LEN*2);
+  Progress.data.best[t.id]=Math.max(Progress.data.best[t.id]||0, score);
+  const passed=score>=THRESHOLD; const area=document.getElementById('quiz-area');
+  if(passed){
+    const next=t.id+1; if(next<=3 && !Progress.data.unlocked.includes(next)) Progress.data.unlocked.push(next);
+    Progress.save(); renderTierButtons();
+    area.innerHTML=`<div class="narr good"><strong>${quiz.correct}/${quiz.items.length} — ${t.name.split('·')[0].trim()} mastered.</strong> ${next<=3?`Tier ${next} is unlocked.`:'That was the last tier!'}</div>
+      ${Progress.ready()?`<p class="badge">🎓 Ready for the lecture — you've mastered all three tiers.</p>`:''}
+      <div class="row">${next<=3?`<button class="btn" onclick="startTier(${next})">Start Tier ${next} →</button>`:`<button class="btn" onclick="go('why')">Why order matters →</button>`}<button class="btn secondary" onclick="go('progress')">My progress</button></div>`;
+  } else {
+    Progress.save(); renderTierButtons();
+    const missedWhy=quiz.missed.slice(0,2).map(m=>`<li class="small">${m.why}</li>`).join('');
+    area.innerHTML=`<div class="narr bad"><strong>${quiz.correct}/${quiz.items.length} — not yet.</strong> You need ${Math.ceil(THRESHOLD*quiz.items.length)}/${quiz.items.length}. This tier checks objectives <strong>${t.objectives}</strong>.</div>
+      <p>The ideas you missed:</p><ul>${missedWhy}</ul>
+      <p><strong>Suggested step:</strong> ${t.remedialText}</p>
+      <div class="row"><button class="btn" onclick="go('${t.remedialView}')">Open the re-teach activity</button><button class="btn secondary" onclick="startTier(${t.id})">Retry now with new questions</button></div>`;
+  }
+}
+
+/* =====================================================================
+   WATCH view
+   ===================================================================== */
+let watchTree=BST.from([50,30,70,20,60,80]);
+const watchAnim=new Animator(document.getElementById('watch-svg'), document.getElementById('watch-narr'), watchTree);
+function watchSetControls(active){ document.getElementById('watch-step').disabled=!active; document.getElementById('watch-play').disabled=!active; }
+function watchLoad(op){
+  const v=parseInt(document.getElementById('watch-val').value,10); if(isNaN(v)) return;
+  const trace = op==='insert'? watchTree.insert(v) : watchTree.search(v);
+  watchAnim.tree=watchTree; watchAnim.load(trace, op);
+  watchAnim.narrate(`${op==='insert'?'Inserting':'Searching for'} ${v}. Press Step or Play.`);
+  watchSetControls(true);
+  watchAnim.onDone=()=>{ watchSetControls(false); if(op==='insert'){ document.getElementById('watch-val').value=Math.floor(Math.random()*99); } };
+}
+document.getElementById('watch-insert').onclick=()=>watchLoad('insert');
+document.getElementById('watch-search').onclick=()=>watchLoad('search');
+document.getElementById('watch-step').onclick=()=>{ watchAnim.stop(); watchAnim.step(); };
+document.getElementById('watch-play').onclick=()=>watchAnim.play(2300-parseInt(document.getElementById('watch-speed').value,10));
+document.getElementById('watch-example').onclick=()=>{ watchTree=BST.from([50,30,70,20,60,80]); watchAnim.tree=watchTree; watchAnim.load([]); watchAnim.narrate('Example tree loaded: 50, 30, 70, 20, 60, 80. Now insert something — try 40, then 65.'); watchSetControls(false); };
+document.getElementById('watch-clear').onclick=()=>{ watchTree=new BST(); watchAnim.tree=watchTree; watchAnim.load([]); watchAnim.narrate('Empty tree. Insert values in any order and watch the shape change. Try 1, 2, 3, 4, 5 — then clear and try 3, 1, 5, 2, 4.'); watchSetControls(false); };
+
+/* =====================================================================
+   TRY view — predict the path (consumes the same trace)
+   ===================================================================== */
+let tryState=null;
+const trySvg=document.getElementById('try-svg'), tryNarr=document.getElementById('try-narr');
+function tryButtons(left,right,place){ document.getElementById('try-left').disabled=!left; document.getElementById('try-right').disabled=!right; document.getElementById('try-place').disabled=!place; }
+function tryScore(){ document.getElementById('try-score').textContent=`${Progress.data.tryCorrect} / ${Progress.data.tryTotal} correct`; }
+function tryNew(){
+  const n=4+Math.floor(Math.random()*3); const vals=new Set(); while(vals.size<n) vals.add(5+Math.floor(Math.random()*90));
+  const tree=BST.from([...vals]); let v; do{ v=5+Math.floor(Math.random()*90);}while(vals.has(v));
+  const probe=BST.from([...vals]); const trace=probe.insert(v); // trace on a copy; display tree stays unchanged until placed
+  tryState={tree, v, trace, i:0, classes:{}, nodeIds:[...vals]};
+  // map probe node ids to display node ids by value
+  const byVal={}; tree.layout().forEach(p=>byVal[p.node.v]=p.node);
+  tryState.trace=trace.map(st=>({...st, node: st.node? byVal[st.node.v]||st.node : null, parent: st.parent? byVal[st.parent.v] : null}));
+  tryState.classes[tree.root.id]='hl';
+  renderTree(trySvg, tree, {classes:tryState.classes});
+  tryNarr.className='narr'; tryNarr.innerHTML=`Insert <strong>${v}</strong>. You're at the root <strong>${tree.root.v}</strong>. ${hint()}`;
+  tryButtons(true,true,false);
+}
+function hint(){ if(!document.getElementById('try-hints').checked) return ''; const st=tryState.trace[tryState.i]; return `<span class="muted small">Hint: is ${tryState.v} smaller or larger than ${st.node? st.node.v:''}? Smaller → left, larger → right. If that side is empty, you place it.</span>`; }
+function tryChoose(choice){ // 'L','R','P'
+  const st=tryState.trace[tryState.i]; if(!st) return;
+  let expected; if(st.kind==='compare') expected=st.side; else if(st.kind==='place') expected='P';
+  Progress.data.tryTotal++;
+  if(choice===expected){
+    Progress.data.tryCorrect++; Progress.save(); tryScore();
+    // advance
+    if(st.kind==='compare'){
+      const nxt=tryState.trace[tryState.i+1];
+      Object.keys(tryState.classes).forEach(k=>tryState.classes[k]='path');
+      if(nxt.kind==='compare'){ tryState.classes[nxt.node.id]='hl'; tryState.i++; renderTree(trySvg, tryState.tree,{classes:tryState.classes}); tryNarr.className='narr good'; tryNarr.innerHTML=`✅ Right — ${tryState.v} ${st.side==='L'?'<':'>'} ${st.node.v}. Now you're at <strong>${nxt.node.v}</strong>. ${hint()}`; tryButtons(true,true,false); }
+      else { tryState.i++; renderTree(trySvg, tryState.tree,{classes:tryState.classes, ghost:{parent:nxt.parent, side:nxt.side, value:tryState.v}}); tryNarr.className='narr good'; tryNarr.innerHTML=`✅ Right — ${tryState.v} ${st.side==='L'?'<':'>'} ${st.node.v}, and the ${st.side==='L'?'left':'right'} child of ${st.node.v} is <strong>empty</strong>. What now?`; tryButtons(true,true,true); }
+    } else { // placed
+      tryState.tree.insert(tryState.v); Object.keys(tryState.classes).forEach(k=>tryState.classes[k]='path');
+      const placed=tryState.tree.layout().find(p=>p.node.v===tryState.v).node; tryState.classes[placed.id]='new';
+      renderTree(trySvg, tryState.tree,{classes:tryState.classes}); tryNarr.className='narr good'; tryNarr.innerHTML=`🎉 Placed ${tryState.v} as the ${st.side==='L'?'left':'right'} child of ${st.parent.v}. You just ran the insertion algorithm yourself. <button class="btn" onclick="tryNew()">Another one</button>`; tryButtons(false,false,false);
+    }
+  } else {
+    Progress.save(); tryScore(); tryNarr.className='narr bad';
+    if(st.kind==='compare'){
+      if(choice==='P') tryNarr.innerHTML=`❌ Not yet — the ${st.side==='L'?'left':'right'} side of ${st.node.v} is <strong>not empty</strong>, so you can't place it here. You only place when you reach an empty spot. Compare again: ${tryState.v} vs ${st.node.v}.`;
+      else tryNarr.innerHTML=`❌ Not that way. ${tryState.v} is <strong>${st.side==='L'?'smaller':'larger'}</strong> than ${st.node.v}, and ${st.side==='L'?'smaller goes LEFT':'larger goes RIGHT'}. Try again.`;
+    } else {
+      tryNarr.innerHTML=`❌ There's nothing on that side — the ${st.side==='L'?'left':'right'} child of ${st.parent.v} is empty, which means this is exactly where ${tryState.v} belongs. Press <strong>Place it here</strong>.`;
+    }
+  }
+}
+document.getElementById('try-new').onclick=tryNew;
+document.getElementById('try-left').onclick=()=>tryChoose('L');
+document.getElementById('try-right').onclick=()=>tryChoose('R');
+document.getElementById('try-place').onclick=()=>tryChoose('P');
+
+/* =====================================================================
+   STATIC trees for Learn / Why pages, welcome mini-animation
+   ===================================================================== */
+renderTree(document.getElementById('learn1-tree'), BST.from([50,30,70,20,40,80]), {label:'Example binary tree: root 50, children 30 and 70'});
+renderTree(document.getElementById('learn2-valid'), BST.from([50,30,70,40]), {label:'Valid BST'});
+(function(){ const t=new BST(); t.root=new Node(50); t.root.l=new Node(30); t.root.l.r=new Node(60); t.root.r=new Node(70); renderTree(document.getElementById('learn2-invalid'), t, {classes:{[t.root.l.r.id]:'hl'}, label:'Invalid BST: 60 in left subtree of 50'}); })();
+renderTree(document.getElementById('why-good'), BST.from([4,2,6,1,3,5,7]));
+renderTree(document.getElementById('why-bad'), BST.from([1,2,3,4,5,6,7]));
+(function(){ const t=BST.from([50,25,75,12,37,62,87]); const a=new Animator(document.getElementById('welcome-anim'), {set textContent(v){}, set className(v){}}, t); a.load(t.search(62)); a.play(700); setInterval(()=>{ a.load(t.search([12,37,62,87][Math.floor(Math.random()*4)])); a.play(700); }, 5000); })();
+
+/* =====================================================================
+   ROUTER / NAV
+   ===================================================================== */
+const VIEWS=[['welcome','Start'],['learn1','1 Tree'],['learn2','2 Rule'],['watch','3 Watch'],['try','4 Try'],['quiz','5 Quiz'],['why','6 Why order'],['progress','Progress']];
+function go(id){
+  document.querySelectorAll('section.view').forEach(s=>s.classList.toggle('active', s.id==='v-'+id));
+  document.querySelectorAll('#nav button').forEach(b=>{ if(b.dataset.v===id) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  if(!Progress.data.visited.includes(id)){ Progress.data.visited.push(id); Progress.save(); }
+  if(id==='quiz'){ renderTierButtons(); if(!quiz) document.getElementById('quiz-area').innerHTML='<p>Choose a tier to begin. Tier 1 is open; the others unlock as you master each one.</p>'; }
+  if(id==='progress') renderProgress();
+  if(id==='try') tryScore();
+  window.scrollTo({top:0});
+  location.hash=id;
+}
+function renderProgress(){
+  const el=document.getElementById('progress-area'); const d=Progress.data;
+  const rows=TIERS.map(t=>{ const b=d.best[t.id]; return `<div class="objective"><span class="lvl">${t.bloom}</span><span>${t.name} — ${b===undefined?'<span class="pill lock">not attempted</span>':`<span class="pill ${b>=THRESHOLD?'ok':''}">best ${Math.round(b*QUIZ_LEN)}/${QUIZ_LEN}${b>=THRESHOLD?' · mastered':''}</span>`}</span></div>`; }).join('');
+  el.innerHTML=`<p class="small muted">Pages visited: ${d.visited.length} of ${VIEWS.length} · Predict-the-path: ${d.tryCorrect}/${d.tryTotal} correct</p>${rows}
+    ${Progress.ready()?'<p class="badge">🎓 Ready for the lecture.</p>':'<p class="muted">Master all three tiers to earn the "Ready for the lecture" badge.</p>'}
+    <h3>What the lecture will add</h3><p class="small">Deleting a value (the tricky case: a node with two children), traversals (in-order gives sorted output), and self-balancing trees. You now have the vocabulary and the mental model to follow all of it.</p>`;
+}
+(function init(){
+  Progress.load();
+  const nav=document.getElementById('nav');
+  VIEWS.forEach(([id,label])=>{ const b=document.createElement('button'); b.textContent=label; b.dataset.v=id; b.onclick=()=>go(id); nav.appendChild(b); });
+  renderTree(document.getElementById('watch-svg'), watchTree);
+  const start=location.hash.replace('#',''); go(VIEWS.some(v=>v[0]===start)?start:'welcome');
+  // tiny self-test harness: open index.html?test=1 and check the console
+  if(location.search.includes('test=1')){
+    const t=BST.from([50,30,70]); const tr=t.insert(40);
+    console.assert(tr.map(s=>s.kind).join()==='compare,compare,place','insert trace kinds'); console.assert(tr[0].side==='L'&&tr[1].side==='R','insert directions');
+    console.assert(BST.from([1,2,3,4,5]).height()===5,'degenerate height'); console.assert(BST.from([4,2,6,1,3,5,7]).height()===3,'balanced height');
+    console.assert(t.search(99).slice(-1)[0].kind==='notfound','search notfound'); console.assert(t.insert(50)[0].kind==='dup','duplicate rejected');
+    console.log('self-tests done');
+  }
+})();
+</script>
+</body>
+</html>
