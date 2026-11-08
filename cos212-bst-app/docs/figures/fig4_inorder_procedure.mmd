@@ -1,0 +1,7 @@
+flowchart TD
+  S([Start at a node]) --> Q1{Is there a<br/>left child?}
+  Q1 -- yes --> L[Do the whole procedure<br/>on the left child] --> V
+  Q1 -- no --> V[Visit this node:<br/>add its value to the output]
+  V --> Q2{Is there a<br/>right child?}
+  Q2 -- yes --> R[Do the whole procedure<br/>on the right child] --> B
+  Q2 -- no --> B([Return to the parent])

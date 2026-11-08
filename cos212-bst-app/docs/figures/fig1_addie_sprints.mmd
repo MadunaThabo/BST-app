@@ -1,0 +1,15 @@
+flowchart LR
+  subgraph ADDIE[ADDIE lifecycle]
+    direction TB
+    A[Analyse] --> D[Design] --> Dv[Develop] --> I[Implement] --> E[Evaluate]
+  end
+  subgraph SE[Software engineering sprints]
+    direction TB
+    S0[Sprint 0: 7 to 8 Nov<br/>decisions, skeleton, objectives] --> S1[Sprint 1: 9 to 11 Nov<br/>content, visualisation, quiz] --> S2[Sprint 2: 12 to 13 Nov<br/>integration, pilot test] --> F[Freeze: 14 to 15 Nov<br/>fixes, rehearsal, submission]
+  end
+  A -.-> S0
+  D -.-> S0
+  Dv -.-> S1
+  I -.-> S2
+  E -.-> S2
+  E -.-> F

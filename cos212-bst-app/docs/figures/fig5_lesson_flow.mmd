@@ -1,0 +1,9 @@
+flowchart TD
+  W[Welcome and objectives] --> L1[Learn 1] --> L2[Learn 2] --> WA[Watch] --> T[Try]
+  T --> Q1[Quiz tier 1<br/>Remember and understand]
+  Q1 -- 4 of 5 or better --> Q2[Quiz tier 2<br/>Apply]
+  Q1 -- below 4 of 5 --> R1[Re-teach: three orders<br/>side by side] --> Q1
+  Q2 -- 4 of 5 or better --> Q3[Quiz tier 3<br/>Analyse]
+  Q2 -- below 4 of 5 --> R2[Guided predict<br/>with breadcrumb] --> Q2
+  Q3 -- 4 of 5 or better --> RD[Ready for the lecture]
+  Q3 -- below 4 of 5 --> R3[Why the order matters<br/>demo] --> Q3

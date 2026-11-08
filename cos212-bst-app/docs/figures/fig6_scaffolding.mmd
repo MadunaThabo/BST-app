@@ -1,0 +1,10 @@
+sequenceDiagram
+  participant S as Student
+  participant A as App
+  S->>A: Clicks 50 first in in-order
+  A-->>S: Hint 1: Does in-order visit the node before or after its left subtree?
+  S->>A: Clicks 50 again
+  A-->>S: Hint 2: In-order goes left first. The leftmost node is visited first.
+  S->>A: Clicks 20
+  A-->>S: Correct. Output so far: 20. Breadcrumb: 50, 30, 20
+  Note over S,A: Support fades: the next decision is made without a hint
