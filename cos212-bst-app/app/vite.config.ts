@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import fs from "node:fs";
 import path from "node:path";
 
-import siteConfiguration from "./.runapp/make/site.json";
+import siteConfig from "./.runapp/make/site.json" with { type: "json" };
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -17,18 +17,20 @@ export default defineConfig(({ mode }) => {
       sourcemap: emitSourcemaps ? "inline" : false,
       minify: !emitSourcemaps,
     },
-    plugins: [
-      react(),
-      tailwindcss(),
-      runappSiteConfiguration(siteConfiguration),
-      runappErrorOverlayReplay(),
-      runappReactRefreshBoundaryFallback(),
-      runappMakeKitPlugin({ storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}" }),
-      runappLinkedPackageSourcemaps(),
-    ],
+ plugins: [
+  react(),
+  tailwindcss(),
+  runappSiteConfiguration(siteConfig),
+  runappErrorOverlayReplay(),
+  runappReactRefreshBoundaryFallback(),
+  runappMakeKitPlugin({
+    storiesGlob: "/src/**/*.stories.{ts,tsx,js,jsx}",
+  }),
+  runappLinkedPackageSourcemaps(),
+],
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        "@": path.resolve(import.meta.dirname, "./src"),
       },
     },
     server: {
@@ -85,7 +87,7 @@ function runappSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
     return html.replace(`<!-- ${slotName} -->`, content);
   }
 
-  const title = config.title ?? "Figma Make App";
+  const title = config.title ?? "Learning Aid";
   const description = config.description ?? "";
   // Imported HTML keeps its own favicon. New Makes use PNG because Google Search does not
   // support SVG favicons, even though browsers do.
@@ -425,12 +427,12 @@ function runappMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugi
  * path, such as `libraries/<name>/`.
  */
 function runappLinkedPackageSourcemaps(): Plugin {
-  const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf8"));
+  const packageJson = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "package.json"), "utf8"));
   const linkedPackages = Object.keys({
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
   }).flatMap((name) => {
-    const installedDir = path.resolve(__dirname, "node_modules", name);
+    const installedDir = path.resolve(import.meta.dirname, "node_modules", name);
     try {
       const realDir = fs.realpathSync(installedDir);
       return realDir.split(path.sep).includes("node_modules") ? [] : [{ installedDir, realDir }];
